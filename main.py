@@ -7,6 +7,8 @@ from time import time
 from window_capture import WindowCapture
 
 
+impo
+
 wincap = WindowCapture("Grand Theft Auto V")
 
 #### TODO
