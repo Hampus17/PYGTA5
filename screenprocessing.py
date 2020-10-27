@@ -6,42 +6,43 @@ from windowcapture import WindowCapture
 
 wincap = WindowCapture("Grand Theft Auto V")
 
+
 def screenshot():
-	screen = np.array(wincap.get_screenshot())
-	return screen
+    screen = np.array(wincap.get_screenshot())
+    return screen
 
 
-def proc_screenshot(screenshot):
-    # Define ROI and apply it to the screenshot
+def process_frame(frame):
+    # Define ROI and apply it to the frame
     vertices = np.float32([
-    	(0,screenshot.shape[0]),
-    	(0, 340),
-    	(360, 220),
-    	(480, 220),
-    	(screenshot.shape[1], 340),
-    	(screenshot.shape[1], screenshot.shape[0])
-	])
-    screenshot = get_roi(screenshot, vertices)
+        (0, frame.shape[0]),
+        (0, 340),
+        (360, 220),
+        (480, 220),
+        (frame.shape[1], 340),
+        (frame.shape[1], frame.shape[0])
+    ])
+    frame = get_roi(frame, vertices)
 
     # LAB (Yellow), HSV (Yellow + white), HLS (Yellow + white), RGB (White)
-    ### Convert screenshot to color spaces
-    lab = cv2.cvtColor(screenshot, cv2.COLOR_RGB2LAB)
-    hsv = cv2.cvtColor(screenshot, cv2.COLOR_RGB2HSV)
-    hls = cv2.cvtColor(screenshot, cv2.COLOR_RGB2HLS)
+    # Convert screenshot to color spaces
+    lab = cv2.cvtColor(frame, cv2.COLOR_RGB2LAB)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
+    hls = cv2.cvtColor(frame, cv2.COLOR_RGB2HLS)
 
-    ### Select color spaces
-    L_lab, A_lab, B_lab = cv2.split(lab) # Yellow (LAB)
-    H_hsv, S_hsv, V_hsv = cv2.split(hsv) # Yellow and White (HSV)
-    H_hls, L_hls, S_hls = cv2.split(hls) # ... (HLS)
+    # Select color spaces
+    L_lab, A_lab, B_lab = cv2.split(lab)  # Yellow (LAB)
+    H_hsv, S_hsv, V_hsv = cv2.split(hsv)  # Yellow and White (HSV)
+    H_hls, L_hls, S_hls = cv2.split(hls)  # ... (HLS)
 
-    ### Generate the thresholded binary images
+    # Generate the thresholded binary images
     # Yellow (LAB)
     L_lab_max, L_lab_mean = np.max(L_lab), np.mean(L_lab)
     B_lab_max, B_lab_mean = np.max(B_lab), np.mean(B_lab)
 
-    L_adapt = max(80, int(L_lab_max * 0.45))
-    B_adapt =  max(int(B_lab_max * 0.75), int(B_lab_mean * 1))
-    lab_low = np.array((L_adapt, 120, B_adapt))
+    L_lab_adapt = max(40, int(L_lab_max * 0.45))
+    B_lab_adapt = max(int(B_lab_max * 0.75), int(B_lab_mean * 1))
+    lab_low = np.array((L_lab_adapt, 120, B_lab_adapt))
     lab_high = np.array((255, 145, 255))
 
     lab_binary = get_binary_thresh(lab, lab_low, lab_high)
@@ -54,71 +55,70 @@ def proc_screenshot(screenshot):
 # Generate thresholded binary
 def get_binary_thresh(image, low, high):
 
-	# Check if image is grayscale
-	if (len(image.shape) == 2):
-		screenCopy = np.zeros_like(screenshot)
-		binaryMask = (image >= low) & (image <= high)
+    # Check if image is grayscale
+    if (len(image.shape) == 2):
+        screen_copy = np.zeros_like(image)
+        binary_mask = (image >= low) & (image <= high)
 
-	elif (len(image.shape) == 3):
-		screenCopy = np.zeros_like(image)
-		binaryMask = (image[:,:,0] >= low[0]) & (image[:,:,0] <= high[0]) \
-			& (image[:,:,1] >= low[1]) & (image[:,:,1] <= high[1]) \
-			& (image[:,:,2] >= low[2]) & (image[:,:,2] <= high[2])
+    elif (len(image.shape) == 3):
+        screen_copy = np.zeros_like(image[:, :, 0])
+        binary_mask = (image[:, :, 0] >= low[0]) & (image[:, :, 0] <= high[0]) \
+            & (image[:, :, 1] >= low[1]) & (image[:, :, 1] <= high[1]) \
+            & (image[:, :, 2] >= low[2]) & (image[:, :, 2] <= high[2])
 
-	print(binaryMask)
-	screenCopy[binaryMask] = 255
-	return screenCopy
+    # print(binary_mask)
+    screen_copy[binary_mask] = 1
+    return screen_copy
 
 
 def get_roi(image, vertices):
     vertices = np.array(vertices, ndmin=3, dtype=np.int32)
     if len(image.shape) == 3:
-        fill_color = (255,) * 3
+        fill_color = (255)
     else:
         fill_color = 255
-            
+
     mask = np.zeros_like(image)
     mask = cv2.fillPoly(mask, vertices, fill_color)
-    return cv2.bitwise_and(image, mask)
+    image = cv2.bitwise_and(image, mask)
+
+    return image
 
 
 # Warp the image to get a birds eye view of the road
-def warp_image(image, visualize = False):
+def persp_transform(frame):
     '''
-    :param image = The original image
+    :param frame = The original frame
     :param visualize = Boolean flag for visualization
     :return = Warped image
     '''
 
-    ysize = image.shape[0]
-    xsize = image.shape[1]
+    ysize = frame.shape[0]
+    xsize = frame.shape[1]
 
-    # Source points
-    src = np.float32([
-        (0, 500),
-        (360, 220),
-        (480, 220),
-        (xsize, 500),
+    src = np.float32(
+        [[0, ysize / 1.5], 
+        [xsize, ysize / 1.5], 
+        [0, ysize / 2], 
+        [xsize, ysize / 2]
     ])
 
-    # Destination points
-    dst = np.float32([
-        (350, ysize),
-        (350, 220),
-        (xsize - 350, 220),
-        (xsize - 350, ysize)
-    ])
- 
-    M = cv2.getPerspectiveTransform(src, dst)
-    warpedimage = cv2.warpPerspective(image, M, (xsize, ysize), flags=cv2.INTER_LINEAR)
-
-    roivertices = np.int32([
-        [300, ysize],
-        [300, 300],
-        [xsize - 300, 300],
-        [xsize - 300, ysize]
+    dst = np.float32(
+        [[xsize / 3, ysize], 
+        [xsize / 1.5, ysize], 
+        [0, 0], [xsize, 0]
     ])
 
-    warpedimage = get_roi(warpedimage, roivertices)
+    roi_vertices = np.int32([
+        [xsize - (xsize / 1.3), ysize],
+        [xsize - (xsize / 1.3), 0],
+        [xsize / 1.3, 0],
+        [xsize / 1.3, ysize]
+    ])
 
-    return warpedimage
+    # Compute and return the transformation matrix
+    matrix = cv2.getPerspectiveTransform(src, dst)
+    transformed_img = cv2.warpPerspective(frame, matrix, (xsize, ysize), flags=cv2.INTER_LINEAR)
+
+    # return get_roi(transformed_img, roi_vertices)
+    return transformed_img
