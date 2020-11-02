@@ -1,0 +1,46 @@
+{
+    "classes": [
+        {
+            "title": "left_lane",
+            "shape": "polygon",
+            "color": "#B82DD4",
+            "geometry_config": {},
+            "id": 2698558,
+            "hotkey": "L"
+        },
+        {
+            "title": "right_lane",
+            "shape": "polygon",
+            "color": "#1D0BFF",
+            "geometry_config": {},
+            "id": 2698559,
+            "hotkey": "R"
+        },
+        {
+            "title": "LL_lane",
+            "shape": "polygon",
+            "color": "#D0021B",
+            "geometry_config": {},
+            "id": 2698560,
+            "hotkey": "K"
+        },
+        {
+            "title": "RR_lane",
+            "shape": "polygon",
+            "color": "#850010",
+            "geometry_config": {},
+            "id": 2698561,
+            "hotkey": "T"
+        },
+        {
+            "title": "i_lane",
+            "shape": "polygon",
+            "color": "#B2D11A",
+            "geometry_config": {},
+            "id": 2698562,
+            "hotkey": "I"
+        }
+    ],
+    "tags": [],
+    "projectType": "images"
+}
