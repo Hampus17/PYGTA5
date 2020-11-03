@@ -14,6 +14,11 @@ print("3")
 
 controller = pyvjoy.VJoyDevice(1)
 
+# class Vehicle():
+    # __init__(self, car_name="Unknown", model, ):
+
+
+
 ###### Global variables
 
 J_SENSITIVITY = 1

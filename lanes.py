@@ -1,25 +1,26 @@
 import json
-import cv2
 
-from PIL import Image, ImageDraw
-import numpy as np
+from PIL import ImageDraw, Image
 
-## Change this so it works with feeding in a image and a JSON file
-## Change so it can draw lines without JSON file as well 
+## Change so it can draw lines without JSON file as well (need ML first)
+## Do so it can recieve a numpy image?
 
-def draw_lanes(image, points):
+TEST_LABEL_SET = "tests/PROCESSED_LABELS/xy_points.json"
+TEST_IMAGE = "tests/IMAGES/frame_1009.jpg.png"
+
+def draw_lanes(image, label_set):
     '''
-        This function is mostly used for debug purposes
-
         Parameters:
             image (Image): The image which to draw the lanes on
-            points (tuple): The tuple of XY points for the lanes
+            label_set (List): The 
     '''
+    img = Image.open(image)
+    grouped_set = extract_lane_points(label_set)
 
     i = 0
     draw_color = (0, 0, 255)
 
-    for xys in points:
+    for xy_sets in grouped_set:
         if i == 1:
             draw_color = (0, 255, 0)
         elif i == 2:
@@ -27,12 +28,12 @@ def draw_lanes(image, points):
         elif i == 3:
             draw_color = (186, 85, 211)
         i = i + 1
-        ImageDraw.Draw(image).polygon(xys, fill=draw_color)
+        ImageDraw.Draw(img).polygon(tuple(xy_sets[1]), fill=draw_color)
 
-    image.show()
+    img.show()
 
 
-def load_lane_points(file):
+def extract_lane_points(file):
     '''
         Used to extract the points for the lanes
 
@@ -44,19 +45,22 @@ def load_lane_points(file):
     '''
 
     with open(file) as json_file:
-        xy_points = []
+        grouped_set = []
         data = json.load(json_file)
-        for obj_key in data['objects']:
-            points_key = obj_key['points']
-            coords = []
-            for point in points_key['exterior']:
-                coords.append(tuple(point))
-            xy_points.append(tuple(coords))
+        
+        i = 1
+        for lanes in data['points']:
+            temp_set = []
+            temp_set.append([lanes['label']])
+            xy_set = []
+            for xy in lanes['lane_{}'.format(i)]:
+                xy_set.append(tuple(xy))
+            temp_set.append(xy_set)
+            grouped_set.append(temp_set)
+            i = i + 1
+        
+        return grouped_set
+        # return tuple(xy_points)
 
-        return tuple(xy_points)
 
-
-test_image = Image.open('tests/ds0/img/frame_1009.jpg.png')
-test_json_file = "tests/ds0/ann/frame_1009.jpg.png.json"
-
-draw_lanes(test_image, load_lane_points(test_json_file))
+draw_lanes(TEST_IMAGE, TEST_LABEL_SET)
