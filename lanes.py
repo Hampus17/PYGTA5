@@ -1,9 +1,14 @@
 import json
+import math
 
 from PIL import ImageDraw, Image
 
 ## Change so it can draw lines without JSON file as well (need ML first)
 ## Do so it can recieve a numpy image?
+
+# Function to draw a middle line?
+# Something to calculate where the middle of the lane is
+
 
 TEST_LABEL_SET = "tests/PROCESSED_LABELS/xy_points.json"
 TEST_IMAGE = "tests/IMAGES/frame_1009.jpg.png"
@@ -19,17 +24,26 @@ def draw_lanes(image, label_set):
 
     i = 0
     draw_color = (0, 0, 255)
+    middle_points = []
 
-    for xy_sets in grouped_set:
-        if i == 1:
-            draw_color = (0, 255, 0)
-        elif i == 2:
-            draw_color = (255, 0, 0)
-        elif i == 3:
-            draw_color = (186, 85, 211)
+    for group in grouped_set:
+        if i == 1: draw_color = (0, 255, 0)
+        elif i == 2: draw_color = (255, 0, 0)
+        else: draw_color = (186, 85, 211)
         i = i + 1
-        ImageDraw.Draw(img).polygon(tuple(xy_sets[1]), fill=draw_color)
 
+        ImageDraw.Draw(img).polygon(tuple(group[1]), fill=draw_color)
+
+
+    middle_points = []
+    for group in grouped_set:
+        j = 0
+        for s in group[1]:
+            if (j == math.floor(len(group[1]) / 4)):
+                middle_points.append(s)
+            j = j + 1
+    middle_points.pop()
+    ImageDraw.Draw(img).line(tuple(middle_points), fill=(255, 0, 0,), width = 6)
     img.show()
 
 
