@@ -12,6 +12,9 @@ from lanes import draw_lanes
 
 wincap = WindowCapture("Grand Theft Auto V")
 
+''' if __name__ == '__main__':
+    run() '''
+
 # Starting point of the program
 loop_time = time()
 while True:

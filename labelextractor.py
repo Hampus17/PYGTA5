@@ -1,4 +1,6 @@
 import json
+import os
+import sys
 
 p_data = {
     'points': [
@@ -6,30 +8,43 @@ p_data = {
     ]
 }
 
-def extract(file_to_read, file_to_write):
+def extract(folder_path, proc_labelset_path, labelset_prefix):
     ''' 
         Used to extract and generate necessary information from JSON label file
         
         Parameters:
-            file_to_read (JSON): This is the original label file generated
-            file_to_write (JSON): File to write the simplified version with only the necessary information
+            folder_path (string): This is the path to the folder with the labelsets
+            proc_labelset_path (string): Path to where processed labelsets are stored
+            labelset_name (string): This is the prefix for the output labelsets
     '''
-    with open(file_to_read) as json_file:
-        i = 1
-        data = json.load(json_file)
-        for obj_key in data['objects']:
-            points_key = obj_key['points']
-            class_key = obj_key['classTitle']
-            coords = []
-            for point in points_key['exterior']:
-                coords.append(point) 
-            p_data['points'].append({
-                'label' : class_key,
-                'lane_{}'.format(i) : coords
-                })
-            i = i + 1
+    
+    
+    for file in os.listdir(folder_path):
+        if file.endswith(".json"):
+            write_to = proc_labelset_path + "{}_frame.json".format(labelset_prefix)
+            filepath = os.path.join(folder_path, file)
+            with open(filepath) as json_file:
+                i = 1
+                data = json.load(json_file)
+                for obj_key in data['objects']:
+                    points_key = obj_key['points']
+                    class_key = obj_key['classTitle']
+                    coords = []
+                    for point in points_key['exterior']:
+                        coords.append(point) 
+                    p_data['points'].append({
+                        'label' : class_key,
+                        'lane_points' : coords
+                        })
+                    i = i + 1
 
-        json_str = json.dumps(p_data, indent=4)
-        print(json_str)
-        with open(file_to_write, 'w') as outfile:
-            outfile.write(json_str)
+            json_str = json.dumps(p_data, indent=4)
+            with open(write_to, 'w') as outfile:
+                outfile.write(json_str)
+            continue
+        else:
+            print("Warning: Skipped {} (Not a JSON file)".format(file))
+            continue
+        
+if __name__ == '__main__':
+    globals()[sys.argv[1]](sys.argv[2], sys.argv[3], sys.argv[4])

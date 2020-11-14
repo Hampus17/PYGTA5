@@ -2,3 +2,7 @@ numpy
 opencv-python
 pywin32
 PIL
+pyvjoy
+efficientnet
+tensorflow
+matplotlib
