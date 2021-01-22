@@ -1,0 +1,9 @@
+- Now that the lanenet works, we need to prepare the dataset which it has to train on
+    - Needs to be similar to tusimple's dataset
+    - Refer to the data/training_data_example folder structure
+
+- Capture and segment images    
+
+- Train dataset
+
+- Extract data points to do calculations based on the lane lines

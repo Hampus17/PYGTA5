@@ -6,3 +6,10 @@ pyvjoy
 efficientnet
 tensorflow
 matplotlib
+
+
+python tools/test_lanenet.py --weights_path pretrained\tusimple_lanenet.ckpt.data-00000-of-00001
+--image_path 1Image.png
+
+
+H:\Python\GTAI5\lanenet-lane-detection\pretrained
