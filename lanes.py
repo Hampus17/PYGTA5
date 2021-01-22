@@ -24,21 +24,21 @@ def draw_lanes(image, label_set):
     '''
     img = Image.open(image)
     i = 0
-    DRAW_COLOR = ()
+    draw_color = ()
     left_lane = None
     right_lane = None
     
     grouped_set = JSON_to_list(label_set)
     for group in grouped_set:
-        if i == 0: DRAW_COLOR = (0, 0, 255)
-        elif i == 1: DRAW_COLOR = (0, 255, 0)
-        elif i == 2: DRAW_COLOR = (255, 0, 0)
-        else: DRAW_COLOR = (186, 85, 211)
+        if i == 0: draw_color = (0, 0, 255)
+        elif i == 1: draw_color = (0, 255, 0)
+        elif i == 2: draw_color = (255, 0, 0)
+        else: draw_color = (186, 85, 211)
 
         if 'left_lane' in group[0]: left_lane = group[1]
         elif 'right_lane' in group[0]: right_lane = group[1]
         
-        ImageDraw.Draw(img).line(tuple(group[1]), fill=DRAW_COLOR, width=8)
+        ImageDraw.Draw(img).line(tuple(group[1]), fill=draw_color, width=8)
     
         i = i + 1
     
