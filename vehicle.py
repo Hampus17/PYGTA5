@@ -1,99 +1,113 @@
+import math
 import time
 
 import pyvjoy
-import efficientnet
 
 
-print("Starting...")
-time.sleep(1);
-print("1")
-time.sleep(1);
-print("2")
-time.sleep(1);
-print("3")
+class Vehicle:
 
-controller = pyvjoy.VJoyDevice(1)
+    controller = pyvjoy.VJoyDevice(1)
 
-# class Vehicle():
-    # __init__(self, car_name="Unknown", model, ):
+    ###### Global variables
+    STEER_SENSITIVITY = 1
 
+    # Button variables
+    KEY_A = 1
+    KEY_B = 2
+    KEY_X = 3
+    KEY_Y = 4
+    KEY_PRESSED = True
+    KEY_RELEASED = False
 
+    # Trigger variables
+    TRIGGER_MAX = 0x8000
+    TRIGGER_MEDIUM = 0x5000
+    TRIGGER_LOW = 0x2000
+    TRIGGER_NONE = 0x0
 
-###### Global variables
+    '''
+        wAxisX = Left X
+        wAxisY = Left y
+        wAxisZ = Left Trigger
 
-J_SENSITIVITY = 1
+        wAxisXRot = Right X
+        wAxisXRot = Right Y
+        wAxisZRot = Right Trigger
 
-# Button variables
-KEY_A = 1
-KEY_B = 2
-KEY_X = 3
-KEY_Y = 4
-KEY_PRESSED = True
-KEY_RELEASED = False
+        0x8000 = 32768
+    '''
+    
+    def __init__(self, mode, car_name="Unknown"):
+        self.controller.data.wAxisX = 0x4000
+        self.controller.data.wAxisY = 0x4000
+        self.controller.data.wAxisXRot = 0x4000
+        self.controller.data.wAxisYRot = 0x4000
+        self.controller.update()
+        print("vehicle created")
 
-# Trigger variables
-TRIGGER_MAX = 0x8000
-TRIGGER_MEDIUM = 0x5000
-TRIGGER_LOW = 0x2000
-TRIGGER_NONE = 0x0
+    def control_vehicle(self, predictions):
+        '''
+        Args:
+            predictions: dict of predictions
+        '''
 
-'''
-    wAxisX = Left X
-    wAxisY = Left y
-    wAxisZ = Left Trigger
+        if predictions['forward'] is True:
+            self.drive_forward(predictions['throttle'])
+            print("Going forward")
+        if predictions['forward'] is False:
+            self.drive_backwards(predictions['throttle'])
 
-    wAxisXRot = Right X
-    wAxisXRot = Right Y
-    wAxisZRot = Right Trigger
+        # Apply the correct steering radius
+        self.turn(predictions['steering_scale'], 1)
 
-    0x8000 = 32768
-'''
+        if predictions['steering_scale'] < 0:
+            print("Turning left with:", predictions['steering_scale'])
+        else:
+            print("Turning right with:", predictions['steering_scale'])
 
-# Set default values of the joysticks
-controller.data.wAxisX = 0x4000
-controller.data.wAxisY = 0x4000
-controller.data.wAxisXRot = 0x4000
-controller.data.wAxisYRot = 0x4000
-controller.update()
+        self.controller.update()
 
-
-def test1():
-    controller.data.wAxisZRot = TRIGGER_MAX
-    controller.update()
-    time.sleep(3)
-
-    controller.data.wAxisX = 0x6000
-    controller.data.wAxisZRot = TRIGGER_LOW
-    controller.update()
-    time.sleep(1)
-
-    controller.data.wAxisX = 0x4000
-    controller.data.wAxisZRot = TRIGGER_MEDIUM
-    controller.update()
-    time.sleep(4)
-
-    controller.data.wAxisZRot = TRIGGER_NONE
-    controller.update()
-    print("Test done. . .")
-
-test1()
+    def drive_forward(self, throttle):
+        self.controller.data.wAxisZ = self.TRIGGER_NONE
+        self.controller.data.wAxisZRot = throttle
 
 
-"""
-def d_forward(throttle):
-    controller.data.wAxisZ = TRIGGER_NONE
+    def turn(self, scale, sensitivity):
+        '''
+            param: axis         -> -1.0 or 1.0  (-1.0 = left  |  1.0 = right)
+            param: scale        -> 0 to 16000   (0 = no turn  |  16000 = full turn)
+            param: sensitivity  -> 0 to 10      (controls the smoothness of joystick movement)
+        '''
+        self.controller.data.wAxisX = math.floor(scale)
 
-def vehicle_turn(axis, scale, sensitivity):
-'''
-    param: axis         -> -1.0 or 1.0  (-1.0 = left  |  1.0 = right)
-    param: scale        -> 0 to 16000   (0 = no turn  |  16000 = full turn)
-    param: sensitivity  -> 0 to 10      (controls the smoothness of joystick movement)
-'''
+    def drive_backwards(self, throttle):
+        self.controller.data.wAxisZRot = TRIGGER_NONE
 
-def d_backwards(throttle):
-    controller.data.wAxisZRot = TRIGGER_NONE
+    def brake(self, throttle, handbrake=False):
+        pass
 
-def vehicle_brake(strength, handbrake=False):
+    def release_gas(self):
+        self.controller.data.wAxisZRot = self.TRIGGER_NONE
+        self.controller.data.wAxisZ = self.TRIGGER_NONE
 
-def 
-"""
+
+    # def test1():
+    #     self.controller.data.wAxisZRot = TRIGGER_MAX
+    #     self.controller.update()
+    #     time.sleep(3)
+    #
+    #     self.controller.data.wAxisX = 0x6000
+    #     self.controller.data.wAxisZRot = TRIGGER_LOW
+    #     self.controller.update()
+    #     time.sleep(1)
+    #
+    #     self.controller.data.wAxisX = 0x4000
+    #     self.controller.data.wAxisZRot = TRIGGER_MEDIUM
+    #     self.controller.update()
+    #     time.sleep(4)
+    #
+    #     self.controller.data.wAxisZRot = TRIGGER_NONE
+    #     self.controller.update()
+    #     print("Test done. . .")
+
+
